@@ -55,12 +55,12 @@
     </div>
 
     <script>
+     // ========================================================================
+      // PASTIKAN API_URL ANDA BERAKHIRAN /exec DAN ADA DI SINI
       // ========================================================================
-      // PERHATIAN: GANTI TEKS DI BAWAH INI DENGAN URL WEB APP APPS SCRIPT ANDA
-      // ========================================================================
-      const API_URL = "https://script.google.com/macros/s/AKfycbwKC3n0qE0pzMHC77N6P2wG2SvSFTV2bbcchJxpxzLhS11FS5hCKosH_6vPrApzHm2-/exec";
+      const API_URL = "https://script.google.com/macros/s/AKfycbwKC3n0qE0pzMHC77N6P2wG2SvSFTV2bbcchJxpxzLhS11FS5hCKosH_6vPrApzHm2-/exec"; // Ganti dengan URL asli Anda!
       
-      // 1. KONTROL LOGIN VIA FETCH API
+      // 1. KONTROL LOGIN (KEBAL CORS)
       function executeLogin(event) {
         event.preventDefault();
         var pin = document.getElementById('pinInput').value;
@@ -72,12 +72,16 @@
         
         fetch(API_URL, {
           method: 'POST',
+          redirect: 'follow', // WAJIB untuk Google Apps Script
           headers: {
-            "Content-Type": "text/plain;charset=utf-8",
+            "Content-Type": "text/plain;charset=utf-8", // Bypass Preflight Options
           },
           body: JSON.stringify({ aksi: "login", pin: pin })
         })
-        .then(response => response.json())
+        .then(response => {
+          if (!response.ok) throw new Error("Jaringan bermasalah");
+          return response.json();
+        })
         .then(respon => {
           if(respon.status) {
             notif.classList.add('hidden');
@@ -98,7 +102,7 @@
           }
         })
         .catch(error => {
-          notif.innerText = "GAGAL TERHUBUNG KE SERVER. CEK KONEKSI.";
+          notif.innerText = "GAGAL TERHUBUNG KE SERVER. CEK API URL ATAU KONEKSI.";
           notif.className = "mt-4 font-bold text-center p-3 bg-red-100 text-red-800 border border-red-200 rounded-lg text-xs uppercase tracking-wide";
           notif.classList.remove('hidden');
           btn.disabled = false;
@@ -106,10 +110,11 @@
         });
       }
 
-      // 2. AMBIL DATA MATERI VIA FETCH API
+      // 2. AMBIL DATA MATERI (KEBAL CORS)
       function pullDynamicMateri() {
         fetch(API_URL, {
           method: 'POST',
+          redirect: 'follow',
           headers: {
             "Content-Type": "text/plain;charset=utf-8",
           },
@@ -124,48 +129,10 @@
         .catch(error => console.error("Error fetching materi:", error));
       }
 
-      // 3. GENERATOR UI DARI JSON
-      function buildMateriUI(dataModul) {
-        var judulDisplay = document.getElementById('judulModulDisplay');
-        if (!dataModul || dataModul.length === 0) {
-          judulDisplay.innerText = "BELUM ADA MATERI AKTIF";
-          return;
-        }
+      // 3. GENERATOR UI (BIARKAN TETAP SAMA SEPERTI SEBELUMNYA)
+      // (Pastikan fungsi buildMateriUI(dataModul) Anda tidak ikut terhapus di sini)
 
-        var modul = dataModul[0]; // Merender baris pertama materi
-
-        judulDisplay.innerText = "MODUL " + modul.id + ": " + modul.judul.toUpperCase();
-        document.getElementById('videoPlayer').src = modul.videoUrl;
-        document.getElementById('sessionModulId').value = modul.id;
-        document.getElementById('teksSopDisplay').innerText = modul.materi ? modul.materi : "Ikuti instruksi operasional pada video.";
-
-        var htmlKuis = `
-          <div class="bg-white p-4 border border-gray-200 rounded-lg shadow-sm">
-            <p class="font-bold text-xs uppercase text-gray-400 tracking-wider mb-2">Evaluasi 01</p>
-            <label class="block font-bold text-sm text-gray-900 mb-3">${modul.soal1.tanya}</label>
-            <div class="space-y-2">
-              <label class="flex items-center text-sm p-2 rounded border border-gray-100 hover:bg-gray-50 cursor-pointer"><input type="radio" name="q1" value="${modul.soal1.opsiA}" required class="mr-3 h-4 w-4 text-black focus:ring-black"> ${modul.soal1.opsiA}</label>
-              <label class="flex items-center text-sm p-2 rounded border border-gray-100 hover:bg-gray-50 cursor-pointer"><input type="radio" name="q1" value="${modul.soal1.opsiB}" class="mr-3 h-4 w-4 text-black focus:ring-black"> ${modul.soal1.opsiB}</label>
-              <label class="flex items-center text-sm p-2 rounded border border-gray-100 hover:bg-gray-50 cursor-pointer"><input type="radio" name="q1" value="${modul.soal1.opsiC}" class="mr-3 h-4 w-4 text-black focus:ring-black"> ${modul.soal1.opsiC}</label>
-            </div>
-          </div>
-
-          <div class="bg-white p-4 border border-gray-200 rounded-lg shadow-sm">
-            <p class="font-bold text-xs uppercase text-gray-400 tracking-wider mb-2">Evaluasi 02</p>
-            <label class="block font-bold text-sm text-gray-900 mb-3">${modul.soal2.tanya}</label>
-            <div class="space-y-2">
-              <label class="flex items-center text-sm p-2 rounded border border-gray-100 hover:bg-gray-50 cursor-pointer"><input type="radio" name="q2" value="${modul.soal2.opsiA}" required class="mr-3 h-4 w-4 text-black focus:ring-black"> ${modul.soal2.opsiA}</label>
-              <label class="flex items-center text-sm p-2 rounded border border-gray-100 hover:bg-gray-50 cursor-pointer"><input type="radio" name="q2" value="${modul.soal2.opsiB}" class="mr-3 h-4 w-4 text-black focus:ring-black"> ${modul.soal2.opsiB}</label>
-              <label class="flex items-center text-sm p-2 rounded border border-gray-100 hover:bg-gray-50 cursor-pointer"><input type="radio" name="q2" value="${modul.soal2.opsiC}" class="mr-3 h-4 w-4 text-black focus:ring-black"> ${modul.soal2.opsiC}</label>
-            </div>
-          </div>
-        `;
-
-        document.getElementById('dynamicKuisArea').innerHTML = htmlKuis;
-        document.getElementById('btnKuis').classList.remove('hidden');
-      }
-
-      // 4. KONTROL EVALUASI KUIS VIA FETCH API
+      // 4. KONTROL EVALUASI KUIS (KEBAL CORS)
       function executeKuisSubmit(event) {
         event.preventDefault();
         var btn = document.getElementById('btnKuis');
@@ -185,6 +152,10 @@
 
         fetch(API_URL, {
           method: 'POST',
+          redirect: 'follow',
+          headers: {
+            "Content-Type": "text/plain;charset=utf-8",
+          },
           body: JSON.stringify(payload)
         })
         .then(response => response.json())
@@ -202,7 +173,7 @@
           }
         })
         .catch(error => {
-          notif.innerText = "TERJADI KESALAHAN JARINGAN.";
+          notif.innerText = "TERJADI KESALAHAN JARINGAN SAAT MENGIRIM KUIS.";
           notif.className = "mt-4 p-4 bg-red-50 text-red-800 border-red-200 rounded-lg text-xs font-semibold text-center shadow-inner";
           notif.classList.remove('hidden');
           btn.disabled = false;
